@@ -6,45 +6,95 @@
   <title>Document</title>
 </head>
 <body>
+  <div id="questions"></div>
 
-  <form>
-    <p>
-      <label for="search">Search</label>
-      <input type="text" name="search" id="search">
-    </p>
-    <p>
-      <button id="searchGIPHY">Search GIPHY</button>
-    </p>
-  </form>
 
-  <div id="gifs"></div>
   
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
 
-    document.getElementById('searchGIPHY').addEventListener('click', event => {
-      event.preventDefault()
+    function shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
 
-      let search = document.getElementById('search').value
+    let questions = []
 
-      axios.get(`https://api.giphy.com/v1/gifs/search?api_key=so6QOTNdmWKPObKhaL11EhE7gGtpiiqG&q=${search}&limit=10&rating=g`)
-        .then(res => {
-          let gifs = res.data.data
+    axios.get('https://opentdb.com/api.php?amount=20&category=9&difficulty=easy&type=multiple')
+      .then(res => {
+        questions = res.data.results
 
-          document.getElementById('gifs').innerHTML = ''
-          
-          gifs.forEach(gif => {
-            let gifElem = document.createElement('img')
-            gifElem.src = gif.images.original.url
-            gifElem.alt = gif.title
-            document.getElementById('gifs').append(gifElem)
+        questions.forEach((question, i) => {
+
+          let answers = [...question.incorrect_answers, question.correct_answer]
+
+          answers = shuffle(answers)
+
+          let questionElem = document.createElement('div')
+          questionElem.innerHTML = `
+            <h3>${question.question}</h3>
+            <form>
+              <input 
+                class="answer" 
+                type="radio" 
+                name="${i}"
+                data-value="${answers[0]}">
+              <label for="${i}">${answers[0]}</label>
+              <input 
+                class="answer" 
+                type="radio" 
+                name="${i}"
+                data-value="${answers[1]}">
+              <label for="${i}">${answers[1]}</label>
+              <input 
+                class="answer" 
+                type="radio" 
+                name="${i}"
+                data-value="${answers[2]}">
+              <label for="${i}">${answers[2]}</label>
+              <input 
+                class="answer" 
+                type="radio" 
+                name="${i}"
+                data-value="${answers[3]}">
+              <label for="${i}">${answers[3]}</label>
+            </form>
+            <hr>
+          `
+
+          document.getElementById('questions').append(questionElem)
+        })
+
+        let btnElem = document.createElement('button')
+        btnElem.id = "submit"
+        btnElem.textContent = 'Submit Quiz'
+
+        document.getElementById('questions').append(btnElem)
+      })
+      .catch(err => console.error(err))
+
+      document.addEventListener('click', event => {
+        if (event.target.className === 'answer') {
+
+          let index = parseInt(event.target.name)
+
+          questions[index].chosen_answer = event.target.dataset.value
+        } else if (event.target.id === 'submit') {
+
+          let score = 0
+
+          questions.forEach(question => {
+            if (question.chosen_answer === question.correct_answer) {
+              score++
+            }
           })
 
-          document.getElementById('search').value = ''
-        })
-        .catch(err => console.error(err))
-    })
-
+          alert(`You got ${score} out of 20 questions right!`)
+        }
+      })
 
 
   </script>
